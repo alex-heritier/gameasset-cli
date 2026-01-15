@@ -1,0 +1,1 @@
+export { AssetRepository } from './AssetRepository';
