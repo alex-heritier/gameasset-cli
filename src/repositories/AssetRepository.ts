@@ -5,9 +5,6 @@ import { AssetSource } from '../services/AssetSource';
 import { Storage } from '../storage/Storage';
 import { sanitizeFilename } from '../utils/filename';
 
-const DEFAULT_SEARCH_LIMIT = 20;
-const MAX_SEARCH_LIMIT = 100;
-
 export class AssetRepository {
   private sources = new Map<string, AssetSource>();
   private lastSearchResult: SearchResult | null = null;
@@ -122,7 +119,7 @@ export class AssetRepository {
       throw new Error(`Could not find download URL for asset: ${asset.title}`);
     }
 
-    const safeFilename = this.sanitizeFilename(info.download.filename);
+    const safeFilename = sanitizeFilename(info.download.filename);
     const filepath = path.join(outputDir, safeFilename);
     const result = await source.downloadAsset(info.download.url, filepath);
 
@@ -157,9 +154,5 @@ export class AssetRepository {
       source: lastSearch.source,
       query: lastSearch.query,
     };
-  }
-
-  private sanitizeFilename(filename: string): string {
-    return sanitizeFilename(filename);
   }
 }

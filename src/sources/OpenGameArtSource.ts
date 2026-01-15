@@ -61,13 +61,19 @@ export class OpenGameArtSource extends BaseAssetSource {
     if (fileLinks.length > 0) {
       const href = fileLinks.first().attr('href');
       const filename = fileLinks.first().text().trim().split('\n')[0].trim() || 'download';
-      if (href) return { url: this.ensureHttps(href), filename };
+      if (href) {
+        const url = this.ensureHttps(href) || href;
+        return { url, filename };
+      }
     }
 
     const downloadLinks = $('a[href*="/download"], .download-links a, .file-download a');
     if (downloadLinks.length > 0) {
       const href = downloadLinks.first().attr('href');
-      if (href) return { url: this.ensureHttps(href), filename: 'download' };
+      if (href) {
+        const url = this.ensureHttps(href) || href;
+        return { url, filename: 'download' };
+      }
     }
 
     return null;

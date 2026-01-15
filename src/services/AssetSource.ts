@@ -54,8 +54,8 @@ export abstract class BaseAssetSource implements AssetSource {
     };
   }
 
-  protected ensureHttps(url: string): string {
-    if (!url) return url;
+  protected ensureHttps(url: string | undefined): string | undefined {
+    if (!url) return undefined;
     return url.replace(/^http:/, 'https:');
   }
 }

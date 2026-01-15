@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { AssetRepository } from '../repositories/AssetRepository';
 import { Asset } from '../types';
 import { AssetPrinter } from '../cli/AssetPrinter';
+import { DEFAULT_SEARCH_LIMIT, MAX_SEARCH_LIMIT } from '../config/search';
 
 interface SearchCommandOptions {
   query: string;
@@ -14,9 +15,6 @@ interface SearchCommandOptions {
   type: string | undefined;
   json: boolean;
 }
-
-const DEFAULT_SEARCH_LIMIT = 20;
-const MAX_SEARCH_LIMIT = 100;
 
 export class SearchCommand {
   constructor(private program: Command, private repository: AssetRepository) {}

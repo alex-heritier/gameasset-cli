@@ -5,7 +5,6 @@ import { DownloadResult } from '../types';
 
 const FETCH_TIMEOUT_MS = 15000;
 const DOWNLOAD_TIMEOUT_MS = 60000;
-const REDIRECT_TIMEOUT_MS = 10000;
 const MAX_REDIRECTS = 5;
 
 export class PageFetcher {
@@ -63,15 +62,5 @@ export class PageFetcher {
         error: error.message || 'Unknown error during download',
       };
     }
-  }
-
-  async getRedirectUrl(url: string): Promise<string> {
-    const response: AxiosResponse = await axios.get(url, {
-      timeout: REDIRECT_TIMEOUT_MS,
-      headers: { 'User-Agent': this.userAgent },
-      maxRedirects: 0,
-      validateStatus: (status) => status >= 200 && status < 400,
-    });
-    return response.headers.location || url;
   }
 }

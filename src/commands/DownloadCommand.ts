@@ -41,6 +41,17 @@ export class DownloadCommand {
         process.exit(1);
       }
 
+      if (options.source && lastResult) {
+        lastResult = {
+          ...lastResult,
+          assets: lastResult.assets.filter(a => a.source === options.source),
+        };
+        if (lastResult.assets.length === 0) {
+          console.error(chalk.red(`\nNo assets found from source: ${options.source}`));
+          process.exit(1);
+        }
+      }
+
       if (options.link) {
         await this.downloadFromLink(options.link, options.output);
       } else if (options.all) {

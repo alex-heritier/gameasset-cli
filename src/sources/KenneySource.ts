@@ -57,14 +57,18 @@ export class KenneySource extends BaseAssetSource {
       const href = downloadLinks.first().attr('href');
       if (href) {
         const filename = href.split('/').pop() || 'download.zip';
-        return { url: this.ensureHttps(href), filename };
+        const url = this.ensureHttps(href) || href;
+        return { url, filename };
       }
     }
 
     const downloadBtn = $('a.btn-primary, a.button-download, .download-btn a').first();
     if (downloadBtn.length > 0) {
       const href = downloadBtn.attr('href');
-      if (href) return { url: this.ensureHttps(href), filename: 'download.zip' };
+      if (href) {
+        const url = this.ensureHttps(href) || href;
+        return { url, filename: 'download.zip' };
+      }
     }
 
     const metaDownload = $('meta[property="og:url"]').attr('content');
