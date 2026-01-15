@@ -18,8 +18,8 @@ export class SearchCommand {
       .option('--2d', 'Filter for 2D assets')
       .option('--3d', 'Filter for 3D assets')
       .option('-t, --tag <tag>', 'Filter by specific tag')
-      .option('-l, --limit <number>', 'Maximum results (default: 20)', '20')
-      .option('-s, --source <source>', `Source to search (default: itch)`, 'itch')
+      .option('-l, --limit <number>', 'Maximum results per source (default: 10)', '10')
+      .option('-s, --source <source>', `Source to search (all sources if not specified)`)
       .option('--type <type>', 'Filter by file type (png, zip, mp3, etc.)')
       .option('--json', 'Output results as JSON')
       .action(async (options) => {
@@ -30,32 +30,36 @@ export class SearchCommand {
   private async execute(options: any): Promise<void> {
     const limit = Math.min(parseInt(options.limit, 10) || DEFAULT_SEARCH_LIMIT, MAX_SEARCH_LIMIT);
 
-    const searchOptions: SearchOptions = {
-      query: options.query,
-      is2D: options['2d'] || false,
-      is3D: options['3d'] || false,
-      tag: options.tag,
-      limit,
-      source: options.source,
-      fileType: options.type,
-    };
-
     try {
-      console.log(chalk.cyan(`\nSearching ${this.getSourceName(options.source)} for "${options.query}"...`));
+      const sources = options.source ? [options.source] : this.repository.getAvailableSources();
+      const allResults: any[] = [];
 
-      const result = await this.repository.search(searchOptions);
+      for (const source of sources) {
+        const searchOptions: SearchOptions = {
+          query: options.query,
+          is2D: options['2d'] || false,
+          is3D: options['3d'] || false,
+          tag: options.tag,
+          limit,
+          source,
+          fileType: options.type,
+        };
 
-      if (result.assets.length === 0) {
+        const result = await this.repository.search(searchOptions);
+        allResults.push(...result.assets);
+      }
+
+      if (allResults.length === 0) {
         console.log(chalk.yellow('\nNo results found.'));
         return;
       }
 
-      console.log(chalk.green(`\nFound ${result.totalFound} asset(s):\n`));
+      console.log(chalk.green(`\nFound ${allResults.length} asset(s) across ${sources.length} source(s):\n`));
 
       if (options.json) {
-        console.log(JSON.stringify(result, null, 2));
+        console.log(JSON.stringify({ assets: allResults, totalFound: allResults.length }, null, 2));
       } else {
-        this.displayResults(result.assets, options.source);
+        this.displayResults(allResults);
       }
     } catch (error: any) {
       console.error(chalk.red(`\nError: ${error.message}`));
@@ -68,14 +72,13 @@ export class SearchCommand {
     return info?.displayName || source;
   }
 
-  private displayResults(assets: any[], source: string): void {
-    const sourceName = this.getSourceName(source);
-    
+  private displayResults(assets: any[]): void {
     assets.forEach((asset, index) => {
       const number = chalk.dim(`[${index + 1}]`);
       const title = chalk.white(asset.title);
       const author = chalk.dim(`by ${asset.author}`);
       const link = chalk.cyan.underline(asset.link);
+      const sourceName = this.repository.getSourceInfo(asset.source)?.displayName || asset.source;
       
       console.log(`${number} ${title} ${author}`);
       console.log(`    ${link}`);
