@@ -1,8 +1,6 @@
 import { Asset, SearchOptions, DownloadResult } from '../types';
 import { PageFetcher } from './PageFetcher';
 
-const MAX_FILENAME_LENGTH = 200;
-
 export interface AssetSource {
   readonly name: string;
   readonly displayName: string;
@@ -15,6 +13,7 @@ export interface AssetSource {
   downloadAsset(downloadUrl: string, filepath: string): Promise<DownloadResult>;
   isSearchable(): boolean;
   isDownloadable(): boolean;
+  getAssetFileInfo(assetUrl: string): Promise<{ fileType?: string; download?: { url: string; filename: string } }>;
 }
 
 export abstract class BaseAssetSource implements AssetSource {
@@ -34,5 +33,29 @@ export abstract class BaseAssetSource implements AssetSource {
 
   async downloadAsset(downloadUrl: string, filepath: string): Promise<DownloadResult> {
     return this.fetcher.downloadFile(downloadUrl, filepath);
+  }
+
+  async getAssetFileInfo(
+    assetUrl: string
+  ): Promise<{ fileType?: string; download?: { url: string; filename: string } }> {
+    const html = await this.fetcher.fetch(assetUrl);
+    const download = await this.extractDownloadUrl(html, assetUrl);
+
+    if (!download) return {};
+
+    const fileType = download.filename
+      .split('.')
+      .pop()
+      ?.toUpperCase();
+
+    return {
+      fileType,
+      download,
+    };
+  }
+
+  protected ensureHttps(url: string): string {
+    if (!url) return url;
+    return url.replace(/^http:/, 'https:');
   }
 }

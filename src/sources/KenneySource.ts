@@ -74,9 +74,4 @@ export class KenneySource extends BaseAssetSource {
 
     return null;
   }
-
-  private ensureHttps(url: string): string {
-    if (!url) return url;
-    return url.replace(/^http:/, 'https:');
-  }
 }

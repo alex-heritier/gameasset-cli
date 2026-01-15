@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import { AssetRepository } from '../repositories/AssetRepository';
 import { Asset } from '../types';
+import { AssetPrinter } from '../cli/AssetPrinter';
 
 interface SearchCommandOptions {
   query: string;
@@ -78,32 +79,9 @@ export class SearchCommand {
     }
   }
 
-  private getSourceName(source: string): string {
-    const info = this.repository.getSourceInfo(source);
-    return info?.displayName || source;
-  }
-
   private displayResults(assets: Asset[]): void {
     assets.forEach((asset, index) => {
-      const number = chalk.dim(`[${index + 1}]`);
-      const title = chalk.white(asset.title);
-      const author = chalk.dim(`by ${asset.author}`);
-      const link = chalk.cyan.underline(asset.link);
-      const sourceName = this.repository.getSourceInfo(asset.source)?.displayName || asset.source;
-      
-      console.log(`${number} ${title} ${author}`);
-      console.log(`    ${link}`);
-
-      if (asset.cover) {
-        console.log(`    ${chalk.dim('Cover:')} ${asset.cover}`);
-      }
-
-      if (asset.fileType) {
-        console.log(`    ${chalk.dim('Type:')} ${asset.fileType.toUpperCase()}`);
-      }
-
-      console.log(`    ${chalk.dim('Source:')} ${sourceName}`);
-      console.log();
+      AssetPrinter.print(asset, index);
     });
   }
 }

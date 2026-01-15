@@ -3,8 +3,8 @@ import * as path from 'path';
 import { Asset, SearchOptions, SearchResult } from '../types';
 import { AssetSource } from '../services/AssetSource';
 import { Storage } from '../storage/Storage';
+import { sanitizeFilename } from '../utils/filename';
 
-const MAX_FILENAME_LENGTH = 100;
 const DEFAULT_SEARCH_LIMIT = 20;
 const MAX_SEARCH_LIMIT = 100;
 
@@ -37,7 +37,7 @@ export class AssetRepository {
     };
   }
 
-  async search(options: SearchOptions): Promise<SearchResult> {
+  private async runSearchPipeline(options: SearchOptions): Promise<SearchResult> {
     const source = this.sources.get(options.source);
     if (!source) {
       throw new Error(`Unknown source: ${options.source}. Available sources: ${this.getAvailableSources().join(', ')}`);
@@ -49,60 +49,14 @@ export class AssetRepository {
 
     const url = source.buildSearchUrl(options);
     const html = await source.fetcher.fetch(url);
+
     let assets = source.parseSearchResults(html, options.limit);
 
     for (const asset of assets) {
       try {
-        const assetHtml = await source.fetcher.fetch(asset.link);
-        const downloadInfo = await source.extractDownloadUrl(assetHtml, asset.link);
-        if (downloadInfo) {
-          const ext = downloadInfo.filename.split('.').pop()?.toUpperCase() || '';
-          asset.fileType = ext;
-        }
-      } catch {
-        // Continue without file type if fetch fails
-      }
-    }
-
-    if (options.fileType) {
-      const filterType = options.fileType.toUpperCase();
-      assets = assets.filter(a => a.fileType === filterType);
-    }
-
-    this.lastSearchResult = {
-      assets,
-      totalFound: assets.length,
-      source: source.name,
-      query: options.query,
-    };
-
-    await this.storage.saveLastSearch(source.name, options.query);
-    await this.storage.save(assets);
-
-    return this.lastSearchResult;
-  }
-
-  async searchInternal(options: SearchOptions): Promise<SearchResult> {
-    const source = this.sources.get(options.source);
-    if (!source) {
-      throw new Error(`Unknown source: ${options.source}. Available sources: ${this.getAvailableSources().join(', ')}`);
-    }
-
-    if (!source.isSearchable()) {
-      throw new Error(`Source '${source.displayName}' does not support searching`);
-    }
-
-    const url = source.buildSearchUrl(options);
-    const html = await source.fetcher.fetch(url);
-    let assets = source.parseSearchResults(html, options.limit);
-
-    for (const asset of assets) {
-      try {
-        const assetHtml = await source.fetcher.fetch(asset.link);
-        const downloadInfo = await source.extractDownloadUrl(assetHtml, asset.link);
-        if (downloadInfo) {
-          const ext = downloadInfo.filename.split('.').pop()?.toUpperCase() || '';
-          asset.fileType = ext;
+        const info = await source.getAssetFileInfo(asset.link);
+        if (info.fileType) {
+          asset.fileType = info.fileType;
         }
       } catch {
         // Continue without file type if fetch fails
@@ -120,6 +74,20 @@ export class AssetRepository {
       source: source.name,
       query: options.query,
     };
+  }
+
+  async search(options: SearchOptions): Promise<SearchResult> {
+    const result = await this.runSearchPipeline(options);
+
+    this.lastSearchResult = result;
+    await this.storage.saveLastSearch(result.source, result.query);
+    await this.storage.save(result.assets);
+
+    return result;
+  }
+
+  async searchInternal(options: SearchOptions): Promise<SearchResult> {
+    return this.runSearchPipeline(options);
   }
 
   async saveSearchResults(assets: Asset[], query: string): Promise<void> {
@@ -148,16 +116,15 @@ export class AssetRepository {
     }
 
     await fs.ensureDir(outputDir);
-    const assetHtml = await source.fetcher.fetch(asset.link);
-    const downloadInfo = await source.extractDownloadUrl(assetHtml, asset.link);
+    const info = await source.getAssetFileInfo(asset.link);
 
-    if (!downloadInfo) {
+    if (!info.download) {
       throw new Error(`Could not find download URL for asset: ${asset.title}`);
     }
 
-    const safeFilename = this.sanitizeFilename(downloadInfo.filename);
+    const safeFilename = this.sanitizeFilename(info.download.filename);
     const filepath = path.join(outputDir, safeFilename);
-    const result = await source.downloadAsset(downloadInfo.url, filepath);
+    const result = await source.downloadAsset(info.download.url, filepath);
 
     if (!result.success) {
       throw new Error(`Download failed: ${result.error}`);
@@ -193,10 +160,6 @@ export class AssetRepository {
   }
 
   private sanitizeFilename(filename: string): string {
-    return filename
-      .replace(/[<>:"/\\|?*]/g, '_')
-      .replace(/\s+/g, '_')
-      .replace(/[^\w\-.]/g, '')
-      .slice(0, MAX_FILENAME_LENGTH);
+    return sanitizeFilename(filename);
   }
 }

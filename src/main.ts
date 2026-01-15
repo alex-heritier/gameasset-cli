@@ -10,6 +10,7 @@ import { PageFetcher } from './services/PageFetcher';
 import { ItchSource } from './sources/ItchSource';
 import { KenneySource } from './sources/KenneySource';
 import { OpenGameArtSource } from './sources/OpenGameArtSource';
+import { AssetPrinter } from './cli/AssetPrinter';
 
 function main(): void {
   const program = new Command();
@@ -76,15 +77,7 @@ function main(): void {
     ];
 
     demoAssets.forEach((asset, index) => {
-      const number = chalk.dim(`[${index + 1}]`);
-      const title = chalk.white(asset.title);
-      const author = chalk.dim(`by ${asset.author}`);
-      const link = chalk.cyan.underline(asset.link);
-      
-      console.log(`${number} ${title} ${author}`);
-      console.log(`    ${link}`);
-      console.log(`    ${chalk.dim('Source:')} ${asset.source}`);
-      console.log();
+      AssetPrinter.print(asset, index);
     });
   });
   program.addCommand(demoCommand);
