@@ -20,6 +20,7 @@ export class SearchCommand {
       .option('-t, --tag <tag>', 'Filter by specific tag')
       .option('-l, --limit <number>', 'Maximum results (default: 20)', '20')
       .option('-s, --source <source>', `Source to search (default: itch)`, 'itch')
+      .option('--type <type>', 'Filter by file type (png, zip, mp3, etc.)')
       .option('--json', 'Output results as JSON')
       .action(async (options) => {
         await this.execute(options);
@@ -36,6 +37,7 @@ export class SearchCommand {
       tag: options.tag,
       limit,
       source: options.source,
+      fileType: options.type,
     };
 
     try {
@@ -81,6 +83,11 @@ export class SearchCommand {
       if (asset.cover) {
         console.log(`    ${chalk.dim('Cover:')} ${asset.cover}`);
       }
+
+      if (asset.fileType) {
+        console.log(`    ${chalk.dim('Type:')} ${asset.fileType.toUpperCase()}`);
+      }
+
       console.log(`    ${chalk.dim('Source:')} ${sourceName}`);
       console.log();
     });

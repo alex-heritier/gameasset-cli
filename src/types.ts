@@ -4,6 +4,17 @@ export interface Asset {
   link: string;
   cover?: string;
   source: string;
+  fileType?: string;
+}
+
+export interface SearchOptions {
+  query: string;
+  is2D?: boolean;
+  is3D?: boolean;
+  tag?: string;
+  limit: number;
+  source: string;
+  fileType?: string;
 }
 
 export interface SearchOptions {

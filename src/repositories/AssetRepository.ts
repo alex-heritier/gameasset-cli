@@ -49,7 +49,25 @@ export class AssetRepository {
 
     const url = source.buildSearchUrl(options);
     const html = await source.fetcher.fetch(url);
-    const assets = source.parseSearchResults(html, options.limit);
+    let assets = source.parseSearchResults(html, options.limit);
+
+    for (const asset of assets) {
+      try {
+        const assetHtml = await source.fetcher.fetch(asset.link);
+        const downloadInfo = await source.extractDownloadUrl(assetHtml, asset.link);
+        if (downloadInfo) {
+          const ext = downloadInfo.filename.split('.').pop()?.toUpperCase() || '';
+          asset.fileType = ext;
+        }
+      } catch {
+        // Continue without file type if fetch fails
+      }
+    }
+
+    if (options.fileType) {
+      const filterType = options.fileType.toUpperCase();
+      assets = assets.filter(a => a.fileType === filterType);
+    }
 
     this.lastSearchResult = {
       assets,
