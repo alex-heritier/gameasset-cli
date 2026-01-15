@@ -45,7 +45,7 @@ export class SearchCommand {
           fileType: options.type,
         };
 
-        const result = await this.repository.search(searchOptions);
+        const result = await this.repository.searchInternal(searchOptions);
         allResults.push(...result.assets);
       }
 
@@ -61,6 +61,8 @@ export class SearchCommand {
       } else {
         this.displayResults(allResults);
       }
+
+      await this.repository.saveSearchResults(allResults, options.query);
     } catch (error: any) {
       console.error(chalk.red(`\nError: ${error.message}`));
       process.exit(1);

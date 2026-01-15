@@ -82,6 +82,61 @@ export class AssetRepository {
     return this.lastSearchResult;
   }
 
+  async searchInternal(options: SearchOptions): Promise<SearchResult> {
+    const source = this.sources.get(options.source);
+    if (!source) {
+      throw new Error(`Unknown source: ${options.source}. Available sources: ${this.getAvailableSources().join(', ')}`);
+    }
+
+    if (!source.isSearchable()) {
+      throw new Error(`Source '${source.displayName}' does not support searching`);
+    }
+
+    const url = source.buildSearchUrl(options);
+    const html = await source.fetcher.fetch(url);
+    let assets = source.parseSearchResults(html, options.limit);
+
+    for (const asset of assets) {
+      try {
+        const assetHtml = await source.fetcher.fetch(asset.link);
+        const downloadInfo = await source.extractDownloadUrl(assetHtml, asset.link);
+        if (downloadInfo) {
+          const ext = downloadInfo.filename.split('.').pop()?.toUpperCase() || '';
+          asset.fileType = ext;
+        }
+      } catch {
+        // Continue without file type if fetch fails
+      }
+    }
+
+    if (options.fileType) {
+      const filterType = options.fileType.toUpperCase();
+      assets = assets.filter(a => a.fileType === filterType);
+    }
+
+    return {
+      assets,
+      totalFound: assets.length,
+      source: source.name,
+      query: options.query,
+    };
+  }
+
+  async saveSearchResults(assets: Asset[], query: string): Promise<void> {
+    const sources = new Set(assets.map(a => a.source));
+    const sourceName = sources.size === 1 ? Array.from(sources)[0] : 'all';
+    
+    this.lastSearchResult = {
+      assets,
+      totalFound: assets.length,
+      source: sourceName,
+      query,
+    };
+
+    await this.storage.saveLastSearch(sourceName, query);
+    await this.storage.save(assets);
+  }
+
   async download(asset: Asset, outputDir: string = '.'): Promise<string | null> {
     const source = this.sources.get(asset.source);
     if (!source) {
