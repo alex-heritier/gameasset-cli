@@ -1,7 +1,18 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { AssetRepository } from '../repositories/AssetRepository';
-import { SearchOptions } from '../types';
+import { Asset } from '../types';
+
+interface SearchCommandOptions {
+  query: string;
+  limit: string;
+  '2d': boolean;
+  '3d': boolean;
+  tag: string | undefined;
+  source: string | undefined;
+  type: string | undefined;
+  json: boolean;
+}
 
 const DEFAULT_SEARCH_LIMIT = 20;
 const MAX_SEARCH_LIMIT = 100;
@@ -22,12 +33,12 @@ export class SearchCommand {
       .option('-s, --source <source>', `Source to search (all sources if not specified)`)
       .option('--type <type>', 'Filter by file type (png, zip, mp3, etc.)')
       .option('--json', 'Output results as JSON')
-      .action(async (options) => {
+      .action(async (options: SearchCommandOptions) => {
         await this.execute(options);
       });
   }
 
-  private async execute(options: any): Promise<void> {
+  private async execute(options: SearchCommandOptions): Promise<void> {
     const limit = Math.min(parseInt(options.limit, 10) || DEFAULT_SEARCH_LIMIT, MAX_SEARCH_LIMIT);
 
     try {
@@ -45,7 +56,7 @@ export class SearchCommand {
       );
 
       const searchResults = await Promise.all(searchPromises);
-      const allResults = searchResults.flatMap((result) => result.assets);
+      const allResults: Asset[] = searchResults.flatMap((result) => result.assets);
 
       if (allResults.length === 0) {
         console.log(chalk.yellow('\nNo results found.'));
@@ -72,7 +83,7 @@ export class SearchCommand {
     return info?.displayName || source;
   }
 
-  private displayResults(assets: any[]): void {
+  private displayResults(assets: Asset[]): void {
     assets.forEach((asset, index) => {
       const number = chalk.dim(`[${index + 1}]`);
       const title = chalk.white(asset.title);

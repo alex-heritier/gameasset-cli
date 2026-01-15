@@ -1,6 +1,14 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { AssetRepository } from '../repositories/AssetRepository';
+import { SearchResult } from '../types';
+
+interface DownloadCommandOptions {
+  output: string;
+  all: boolean;
+  source: string | undefined;
+  link: string | undefined;
+}
 
 export class DownloadCommand {
   constructor(private program: Command, private repository: AssetRepository) {}
@@ -15,12 +23,12 @@ export class DownloadCommand {
       .option('-a, --all', 'Download all assets from last search')
       .option('-s, --source <source>', 'Source to download from')
       .option('-l, --link <url>', 'Direct asset URL to download')
-      .action(async (indices, options) => {
+      .action(async (indices: string[], options: DownloadCommandOptions) => {
         await this.execute(indices, options);
       });
   }
 
-  private async execute(indices: string[], options: any): Promise<void> {
+  private async execute(indices: string[], options: DownloadCommandOptions): Promise<void> {
     try {
       let lastResult = this.repository.getLastSearchResult();
 
@@ -63,7 +71,7 @@ export class DownloadCommand {
     console.log(chalk.green(`\nDownloaded: ${filepath}`));
   }
 
-  private async downloadAll(lastResult: any, outputDir: string): Promise<void> {
+  private async downloadAll(lastResult: SearchResult, outputDir: string): Promise<void> {
     console.log(chalk.cyan(`\nDownloading all ${lastResult.assets.length} assets...`));
 
     let success = 0;
@@ -85,7 +93,7 @@ export class DownloadCommand {
     console.log(chalk.green(`\nDownloads complete: ${success} successful, ${failed} failed.`));
   }
 
-  private async downloadByIndices(lastResult: any, indices: string[], outputDir: string): Promise<void> {
+  private async downloadByIndices(lastResult: SearchResult, indices: string[], outputDir: string): Promise<void> {
     const numIndices = indices.map(i => parseInt(i, 10));
 
     console.log(chalk.cyan(`\nDownloading ${numIndices.length} asset(s)...`));

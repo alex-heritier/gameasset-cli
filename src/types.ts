@@ -17,15 +17,6 @@ export interface SearchOptions {
   fileType?: string;
 }
 
-export interface SearchOptions {
-  query: string;
-  is2D?: boolean;
-  is3D?: boolean;
-  tag?: string;
-  limit: number;
-  source: string;
-}
-
 export interface DownloadResult {
   success: boolean;
   filepath?: string;
