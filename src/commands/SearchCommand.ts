@@ -32,10 +32,8 @@ export class SearchCommand {
 
     try {
       const sources = options.source ? [options.source] : this.repository.getAvailableSources();
-      const allResults: any[] = [];
-
-      for (const source of sources) {
-        const searchOptions: SearchOptions = {
+      const searchPromises = sources.map((source: string) =>
+        this.repository.searchInternal({
           query: options.query,
           is2D: options['2d'] || false,
           is3D: options['3d'] || false,
@@ -43,11 +41,11 @@ export class SearchCommand {
           limit,
           source,
           fileType: options.type,
-        };
+        })
+      );
 
-        const result = await this.repository.searchInternal(searchOptions);
-        allResults.push(...result.assets);
-      }
+      const searchResults = await Promise.all(searchPromises);
+      const allResults = searchResults.flatMap((result) => result.assets);
 
       if (allResults.length === 0) {
         console.log(chalk.yellow('\nNo results found.'));
