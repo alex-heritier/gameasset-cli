@@ -2,13 +2,14 @@
   "name": "gameasset-dl",
   "version": "2.0.0",
   "description": "Modern CLI tool to search and download free game assets",
+  "type": "module",
   "main": "dist/index.js",
   "bin": {
     "gameasset-dl": "./dist/main.js"
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/main.js",
+    "start": "bun run dist/main.js",
     "dev": "bun run src/main.ts",
     "test": "bun test",
     "lint": "eslint src --ext .ts"
@@ -24,7 +25,7 @@
   "license": "MIT",
   "dependencies": {
     "axios": "^1.6.0",
-    "chalk": "^4.1.2",
+    "chalk": "^5.6.2",
     "cheerio": "^1.0.0-rc.12",
     "commander": "^11.1.0",
     "fs-extra": "^11.1.1"
