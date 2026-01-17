@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { AssetRepository } from '../repositories/AssetRepository';
-import { SearchResult } from '../types';
+import { Asset, SearchResult } from '../types';
 
 interface DownloadCommandOptions {
   output: string;
@@ -9,6 +9,8 @@ interface DownloadCommandOptions {
   source: string | undefined;
   link: string | undefined;
 }
+
+type DownloadItem = { asset: Asset; displayMessage: string };
 
 export class DownloadCommand {
   constructor(private program: Command, private repository: AssetRepository) {}
@@ -71,7 +73,7 @@ export class DownloadCommand {
   private async downloadFromLink(link: string, outputDir: string): Promise<void> {
     console.log(chalk.cyan(`\nDownloading from direct link...`));
     console.log(chalk.dim(`Link: ${link}`));
-    
+
     const filepath = await this.repository.download({
       title: 'Direct Download',
       author: 'Unknown',
@@ -82,16 +84,22 @@ export class DownloadCommand {
     console.log(chalk.green(`\nDownloaded: ${filepath}`));
   }
 
-  private async downloadAll(lastResult: SearchResult, outputDir: string): Promise<void> {
-    console.log(chalk.cyan(`\nDownloading all ${lastResult.assets.length} assets...`));
+  private async downloadAssets(
+    items: DownloadItem[],
+    outputDir: string
+  ): Promise<void> {
+    if (items.length === 0) {
+      console.log(chalk.yellow('\nNo valid assets to download.'));
+      return;
+    }
 
     let success = 0;
     let failed = 0;
 
-    for (const asset of lastResult.assets) {
+    for (const item of items) {
       try {
-        process.stdout.write(`Downloading "${asset.title}"... `);
-        const filepath = await this.repository.download(asset, outputDir);
+        process.stdout.write(item.displayMessage);
+        await this.repository.download(item.asset, outputDir);
         console.log(chalk.green('✓'));
         success++;
       } catch (error: any) {
@@ -104,14 +112,19 @@ export class DownloadCommand {
     console.log(chalk.green(`\nDownloads complete: ${success} successful, ${failed} failed.`));
   }
 
+  private async downloadAll(lastResult: SearchResult, outputDir: string): Promise<void> {
+    console.log(chalk.cyan(`\nDownloading all ${lastResult.assets.length} assets...`));
+
+    const items = lastResult.assets.map(asset => ({ asset, displayMessage: `Downloading "${asset.title}"... ` }));
+    await this.downloadAssets(items, outputDir);
+  }
+
   private async downloadByIndices(lastResult: SearchResult, indices: string[], outputDir: string): Promise<void> {
     const numIndices = indices.map(i => parseInt(i, 10));
 
     console.log(chalk.cyan(`\nDownloading ${numIndices.length} asset(s)...`));
 
-    let success = 0;
-    let failed = 0;
-
+    const items: DownloadItem[] = [];
     for (const index of numIndices) {
       if (index < 1 || index > lastResult.assets.length) {
         console.log(chalk.yellow(`\nInvalid index: ${index}`));
@@ -119,19 +132,9 @@ export class DownloadCommand {
       }
 
       const asset = lastResult.assets[index - 1];
-
-      try {
-        process.stdout.write(`[${index}] "${asset.title}"... `);
-        const filepath = await this.repository.download(asset, outputDir);
-        console.log(chalk.green('✓'));
-        success++;
-      } catch (error: any) {
-        console.log(chalk.red('✗'));
-        console.log(chalk.dim(`  ${error.message}`));
-        failed++;
-      }
+      items.push({ asset, displayMessage: `[${index}] "${asset.title}"... ` });
     }
 
-    console.log(chalk.green(`\nDownloads complete: ${success} successful, ${failed} failed.`));
+    await this.downloadAssets(items, outputDir);
   }
 }
