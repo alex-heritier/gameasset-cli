@@ -1,1 +1,1 @@
-export { Storage, FileSystemStorage } from './Storage';
+export { Storage, FileSystemStorage } from "./Storage";

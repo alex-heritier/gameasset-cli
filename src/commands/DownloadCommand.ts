@@ -1,7 +1,7 @@
-import { Command } from 'commander';
-import chalk from 'chalk';
-import { AssetRepository } from '../repositories/AssetRepository';
-import { Asset, SearchResult } from '../types';
+import { Command } from "commander";
+import chalk from "chalk";
+import { AssetRepository } from "../repositories/AssetRepository";
+import { Asset, SearchResult } from "../types";
 
 interface DownloadCommandOptions {
   output: string;
@@ -13,24 +13,30 @@ interface DownloadCommandOptions {
 type DownloadItem = { asset: Asset; displayMessage: string };
 
 export class DownloadCommand {
-  constructor(private program: Command, private repository: AssetRepository) {}
+  constructor(
+    private program: Command,
+    private repository: AssetRepository,
+  ) {}
 
   register(): void {
     this.program
-      .command('download')
-      .alias('d')
-      .description('Download game assets')
-      .argument('[indices...]', 'Asset indices to download (from last search)')
-      .option('-o, --output <directory>', 'Output directory', '.')
-      .option('-a, --all', 'Download all assets from last search')
-      .option('-s, --source <source>', 'Source to download from')
-      .option('-l, --link <url>', 'Direct asset URL to download')
+      .command("download")
+      .alias("d")
+      .description("Download game assets")
+      .argument("[indices...]", "Asset indices to download (from last search)")
+      .option("-o, --output <directory>", "Output directory", ".")
+      .option("-a, --all", "Download all assets from last search")
+      .option("-s, --source <source>", "Source to download from")
+      .option("-l, --link <url>", "Direct asset URL to download")
       .action(async (indices: string[], options: DownloadCommandOptions) => {
         await this.execute(indices, options);
       });
   }
 
-  private async execute(indices: string[], options: DownloadCommandOptions): Promise<void> {
+  private async execute(
+    indices: string[],
+    options: DownloadCommandOptions,
+  ): Promise<void> {
     try {
       let lastResult = this.repository.getLastSearchResult();
 
@@ -39,17 +45,23 @@ export class DownloadCommand {
       }
 
       if (!lastResult && !options.link) {
-        console.error(chalk.red('\nNo recent search found. Please search first or use --link option.'));
+        console.error(
+          chalk.red(
+            "\nNo recent search found. Please search first or use --link option.",
+          ),
+        );
         process.exit(1);
       }
 
       if (options.source && lastResult) {
         lastResult = {
           ...lastResult,
-          assets: lastResult.assets.filter(a => a.source === options.source),
+          assets: lastResult.assets.filter((a) => a.source === options.source),
         };
         if (lastResult.assets.length === 0) {
-          console.error(chalk.red(`\nNo assets found from source: ${options.source}`));
+          console.error(
+            chalk.red(`\nNo assets found from source: ${options.source}`),
+          );
           process.exit(1);
         }
       }
@@ -61,7 +73,11 @@ export class DownloadCommand {
       } else if (indices.length > 0) {
         await this.downloadByIndices(lastResult!, indices, options.output);
       } else {
-        console.error(chalk.red('\nPlease specify assets to download by index, use --all, or provide --link.'));
+        console.error(
+          chalk.red(
+            "\nPlease specify assets to download by index, use --all, or provide --link.",
+          ),
+        );
         process.exit(1);
       }
     } catch (error: any) {
@@ -70,26 +86,32 @@ export class DownloadCommand {
     }
   }
 
-  private async downloadFromLink(link: string, outputDir: string): Promise<void> {
+  private async downloadFromLink(
+    link: string,
+    outputDir: string,
+  ): Promise<void> {
     console.log(chalk.cyan(`\nDownloading from direct link...`));
     console.log(chalk.dim(`Link: ${link}`));
 
-    const filepath = await this.repository.download({
-      title: 'Direct Download',
-      author: 'Unknown',
-      link,
-      source: 'direct',
-    }, outputDir);
+    const filepath = await this.repository.download(
+      {
+        title: "Direct Download",
+        author: "Unknown",
+        link,
+        source: "direct",
+      },
+      outputDir,
+    );
 
     console.log(chalk.green(`\nDownloaded: ${filepath}`));
   }
 
   private async downloadAssets(
     items: DownloadItem[],
-    outputDir: string
+    outputDir: string,
   ): Promise<void> {
     if (items.length === 0) {
-      console.log(chalk.yellow('\nNo valid assets to download.'));
+      console.log(chalk.yellow("\nNo valid assets to download."));
       return;
     }
 
@@ -100,27 +122,43 @@ export class DownloadCommand {
       try {
         process.stdout.write(item.displayMessage);
         await this.repository.download(item.asset, outputDir);
-        console.log(chalk.green('✓'));
+        console.log(chalk.green("✓"));
         success++;
       } catch (error: any) {
-        console.log(chalk.red('✗'));
+        console.log(chalk.red("✗"));
         console.log(chalk.dim(`  ${error.message}`));
         failed++;
       }
     }
 
-    console.log(chalk.green(`\nDownloads complete: ${success} successful, ${failed} failed.`));
+    console.log(
+      chalk.green(
+        `\nDownloads complete: ${success} successful, ${failed} failed.`,
+      ),
+    );
   }
 
-  private async downloadAll(lastResult: SearchResult, outputDir: string): Promise<void> {
-    console.log(chalk.cyan(`\nDownloading all ${lastResult.assets.length} assets...`));
+  private async downloadAll(
+    lastResult: SearchResult,
+    outputDir: string,
+  ): Promise<void> {
+    console.log(
+      chalk.cyan(`\nDownloading all ${lastResult.assets.length} assets...`),
+    );
 
-    const items = lastResult.assets.map(asset => ({ asset, displayMessage: `Downloading "${asset.title}"... ` }));
+    const items = lastResult.assets.map((asset) => ({
+      asset,
+      displayMessage: `Downloading "${asset.title}"... `,
+    }));
     await this.downloadAssets(items, outputDir);
   }
 
-  private async downloadByIndices(lastResult: SearchResult, indices: string[], outputDir: string): Promise<void> {
-    const numIndices = indices.map(i => parseInt(i, 10));
+  private async downloadByIndices(
+    lastResult: SearchResult,
+    indices: string[],
+    outputDir: string,
+  ): Promise<void> {
+    const numIndices = indices.map((i) => parseInt(i, 10));
 
     console.log(chalk.cyan(`\nDownloading ${numIndices.length} asset(s)...`));
 

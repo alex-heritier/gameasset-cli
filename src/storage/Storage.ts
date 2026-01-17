@@ -1,6 +1,6 @@
-import * as fs from 'fs-extra';
-import * as path from 'path';
-import { Asset } from '../types';
+import * as fs from "fs-extra";
+import * as path from "path";
+import { Asset } from "../types";
 
 export interface Storage {
   save(assets: Asset[]): Promise<void>;
@@ -10,9 +10,9 @@ export interface Storage {
 }
 
 export class FileSystemStorage implements Storage {
-  private searchHistoryPath = path.join(process.cwd(), '.search-history.json');
+  private searchHistoryPath = path.join(process.cwd(), ".search-history.json");
 
-  constructor(private defaultFilename: string = 'search-results.json') {}
+  constructor(private defaultFilename: string = "search-results.json") {}
 
   async save(assets: Asset[]): Promise<void> {
     const filepath = path.join(process.cwd(), this.defaultFilename);
@@ -28,7 +28,11 @@ export class FileSystemStorage implements Storage {
   }
 
   async saveLastSearch(source: string, query: string): Promise<void> {
-    await fs.writeJson(this.searchHistoryPath, { source, query, timestamp: new Date().toISOString() }, { spaces: 2 });
+    await fs.writeJson(
+      this.searchHistoryPath,
+      { source, query, timestamp: new Date().toISOString() },
+      { spaces: 2 },
+    );
   }
 
   async getLastSearch(): Promise<{ source: string; query: string } | null> {

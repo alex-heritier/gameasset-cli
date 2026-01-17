@@ -57,6 +57,7 @@ gameasset-dl sources
 This refactored version follows clean architecture principles:
 
 ### Separation of Concerns
+
 - **AssetSource**: Handles source-specific logic only
 - **PageFetcher**: Manages HTTP requests and downloads
 - **AssetRepository**: Coordinates between sources and storage
@@ -64,16 +65,19 @@ This refactored version follows clean architecture principles:
 - **Storage**: Manages file persistence only
 
 ### Extensibility
+
 - New asset sources can be added by implementing `AssetSource` interface
 - No need to modify existing code when adding new sources
 - Plugin-based architecture for extensibility
 
 ### Dependency Management
+
 - High-level modules depend on abstractions (interfaces)
 - Concrete implementations injected via constructor
 - Easy to mock and test individual components
 
 ### Interface Design
+
 - Small, focused interfaces for each concern
 - `AssetSource` interface contains only source-related methods
 - `Storage` interface contains only persistence methods
@@ -97,8 +101,8 @@ src/
 
 ```typescript
 export class NewSource extends BaseAssetSource {
-  readonly name = 'newsource';
-  readonly displayName = 'New Source';
+  readonly name = "newsource";
+  readonly displayName = "New Source";
 
   buildSearchUrl(options: SearchOptions): string {
     // Build search URL for this source
@@ -108,7 +112,10 @@ export class NewSource extends BaseAssetSource {
     // Parse HTML to extract asset information
   }
 
-  async extractDownloadUrl(html: string, assetUrl: string): Promise<string | null> {
+  async extractDownloadUrl(
+    html: string,
+    assetUrl: string,
+  ): Promise<string | null> {
     // Extract download URL from asset page
   }
 }

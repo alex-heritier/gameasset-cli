@@ -1,1 +1,1 @@
-export { AssetRepository } from './AssetRepository';
+export { AssetRepository } from "./AssetRepository";

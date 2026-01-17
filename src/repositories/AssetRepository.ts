@@ -1,9 +1,9 @@
-import * as fs from 'fs-extra';
-import * as path from 'path';
-import { Asset, SearchOptions, SearchResult } from '../types';
-import { AssetSource } from '../services/AssetSource';
-import { Storage } from '../storage/Storage';
-import { sanitizeFilename } from '../utils/filename';
+import * as fs from "fs-extra";
+import * as path from "path";
+import { Asset, SearchOptions, SearchResult } from "../types";
+import { AssetSource } from "../services/AssetSource";
+import { Storage } from "../storage/Storage";
+import { sanitizeFilename } from "../utils/filename";
 
 export class AssetRepository {
   private sources = new Map<string, AssetSource>();
@@ -23,7 +23,12 @@ export class AssetRepository {
     return Array.from(this.sources.keys());
   }
 
-  getSourceInfo(name: string): { name: string; displayName: string; supports2D: boolean; supports3D: boolean } | null {
+  getSourceInfo(name: string): {
+    name: string;
+    displayName: string;
+    supports2D: boolean;
+    supports3D: boolean;
+  } | null {
     const source = this.sources.get(name);
     if (!source) return null;
     return {
@@ -34,14 +39,20 @@ export class AssetRepository {
     };
   }
 
-  private async runSearchPipeline(options: SearchOptions): Promise<SearchResult> {
+  private async runSearchPipeline(
+    options: SearchOptions,
+  ): Promise<SearchResult> {
     const source = this.sources.get(options.source);
     if (!source) {
-      throw new Error(`Unknown source: ${options.source}. Available sources: ${this.getAvailableSources().join(', ')}`);
+      throw new Error(
+        `Unknown source: ${options.source}. Available sources: ${this.getAvailableSources().join(", ")}`,
+      );
     }
 
     if (!source.isSearchable()) {
-      throw new Error(`Source '${source.displayName}' does not support searching`);
+      throw new Error(
+        `Source '${source.displayName}' does not support searching`,
+      );
     }
 
     const url = source.buildSearchUrl(options);
@@ -62,7 +73,7 @@ export class AssetRepository {
 
     if (options.fileType) {
       const filterType = options.fileType.toUpperCase();
-      assets = assets.filter(a => a.fileType === filterType);
+      assets = assets.filter((a) => a.fileType === filterType);
     }
 
     return {
@@ -88,9 +99,9 @@ export class AssetRepository {
   }
 
   async saveSearchResults(assets: Asset[], query: string): Promise<void> {
-    const sources = new Set(assets.map(a => a.source));
-    const sourceName = sources.size === 1 ? Array.from(sources)[0] : 'all';
-    
+    const sources = new Set(assets.map((a) => a.source));
+    const sourceName = sources.size === 1 ? Array.from(sources)[0] : "all";
+
     this.lastSearchResult = {
       assets,
       totalFound: assets.length,
@@ -102,14 +113,19 @@ export class AssetRepository {
     await this.storage.save(assets);
   }
 
-  async download(asset: Asset, outputDir: string = '.'): Promise<string | null> {
+  async download(
+    asset: Asset,
+    outputDir: string = ".",
+  ): Promise<string | null> {
     const source = this.sources.get(asset.source);
     if (!source) {
       throw new Error(`Unknown source: ${asset.source}`);
     }
 
     if (!source.isDownloadable()) {
-      throw new Error(`Source '${source.displayName}' does not support downloading`);
+      throw new Error(
+        `Source '${source.displayName}' does not support downloading`,
+      );
     }
 
     await fs.ensureDir(outputDir);

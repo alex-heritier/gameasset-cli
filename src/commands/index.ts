@@ -1,2 +1,2 @@
-export { SearchCommand } from './SearchCommand';
-export { DownloadCommand } from './DownloadCommand';
+export { SearchCommand } from "./SearchCommand";
+export { DownloadCommand } from "./DownloadCommand";
